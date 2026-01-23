@@ -115,7 +115,7 @@ class Results(SimpleClass):
         Returns:
             (None) or (PIL.Image): If `pil` is True, a PIL Image is returned. Otherwise, nothing is returned.
         """
-        print("IN RESULTS PY")
+        # print("IN RESULTS PY")
         annotator = Annotator(deepcopy(self.orig_img), line_width, font_size, font, pil, example)
         boxes = self.boxes
         masks = self.masks

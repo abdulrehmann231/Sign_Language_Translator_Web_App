@@ -45,12 +45,12 @@ function stopProcess(message) {
 
 
 //This Code is used to Communicate b/w Client & Server via SOCKETIO
-var socket = io.connect('http://127.0.0.1:5000/');
+var socket = io.connect(window.location.origin);
 
-// Variabel untuk menyimpan kata-kata berturut-turut
-let consecutiveWords = [];
-let finalSentence = "";
-let wordCounter = 0;
+// Variabel untuk menyimpan kata-kata berturut-turut (using window scope for reset access)
+window.consecutiveWords = [];
+window.finalSentence = "";
+window.wordCounter = 0;
 
 function appendToTerminal(message) {
     var terminal = document.getElementById("terminal");
@@ -64,19 +64,19 @@ function appendToTerminal(message) {
     terminal.appendChild(p);
     terminal.scrollTop = terminal.scrollHeight;
 
-    if (consecutiveWords.length === 0 || consecutiveWords[consecutiveWords.length - 1] === message[0]) {
-        consecutiveWords.push(message[0]);
-        wordCounter++; // Menambah jumlah kemunculan kata yang sama
+    if (window.consecutiveWords.length === 0 || window.consecutiveWords[window.consecutiveWords.length - 1] === message[0]) {
+        window.consecutiveWords.push(message[0]);
+        window.wordCounter++;
     } else {
-        consecutiveWords = [message[0]];
-        wordCounter = 1; // Mengatur ulang jumlah kemunculan kata yang sama
+        window.consecutiveWords = [message[0]];
+        window.wordCounter = 1;
     }
 
-    if (wordCounter >= 7 && message[0] !== "G") {
-        finalSentence += (finalSentence.length > 0 ? " " : "") + consecutiveWords[0];
-        document.getElementById("finalSentencePara").innerText = finalSentence;
-        consecutiveWords = [];
-        wordCounter = 0;
+    if (window.wordCounter >= 7 && message[0] !== "G") {
+        window.finalSentence += (window.finalSentence.length > 0 ? " " : "") + window.consecutiveWords[0];
+        document.getElementById("finalSentencePara").innerText = window.finalSentence;
+        window.consecutiveWords = [];
+        window.wordCounter = 0;
     }
 }
 
@@ -171,19 +171,17 @@ $(document).ready(function () {
 
 
 function updateSliderValue(sliderValue) {
-    console.log(sliderValue)
     $.ajax({
         type: 'POST',
         url: '/update_slider_value',
         data: {'sliderValue': sliderValue},
-        success: function () {
-            console.log('Slider value updated successfully!');
-        },
-        error: function () {
-            console.log('Error updating slider value!');
-        }
+        success: function () {},
+        error: function () {}
     });
-    document.getElementById("conf_display").innerHTML = sliderValue
+    document.getElementById("conf_display").innerHTML = sliderValue;
+    // Update slider fill gradient
+    var slider = document.getElementById("slider");
+    slider.style.background = 'linear-gradient(to right, #10b981 ' + sliderValue + '%, #262626 ' + sliderValue + '%)';
 }
 
 function toggleTheme() {

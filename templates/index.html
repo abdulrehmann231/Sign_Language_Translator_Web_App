@@ -1,121 +1,229 @@
-{#L1 labels/object#}
-{#L2 Logo Detection#}
-{#L3 Text/OCR#}
-
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BISINDO Translator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BISINDO Translator - Detection</title>
+    <meta name="description" content="Real-time BISINDO sign language detection and translation">
+    
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
-            crossorigin="anonymous"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
-    <!-- Add this to the <head> section of your HTML file -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
-
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/fontawesome.min.css"
-          integrity="sha512-xX2rYBFJSj86W54Fyv1de80DWBq7zYLn2z0I9bIhQG+rxIF6XVJUpdGnsNHWRa6AvP89vtFupEPDP8eZAtu9qA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/brands.min.css"
-          integrity="sha512-OivR4OdSsE1onDm/i3J3Hpsm5GmOVvr9r49K3jJ0dnsxVzZgaOJ5MfxEAxCyGrzWozL9uJGKz6un3A7L+redIQ=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
-          integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"/>
-
-    <link rel="stylesheet" type="text/css"
-          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-
-
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.0/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
-
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-primary': '#0a0a0a',
+                        'bg-secondary': '#171717',
+                        'bg-tertiary': '#262626',
+                        'border-color': '#2e2e2e',
+                        'accent': '#10b981',
+                        'accent-hover': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* Detection log custom styling */
+        #terminal p {
+            margin: 0;
+            padding: 0;
+        }
+        #terminal .detection-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 11px;
+            color: #737373;
+            border-bottom: 1px solid #262626;
+        }
+        #terminal .detection-word {
+            color: #a3a3a3;
+        }
+        #terminal .detection-conf {
+            color: #737373;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+    </style>
 </head>
-<body class="bg-slate-900">
-    <div class="grid grid-cols-12 gap-4 mx-8 mt-8">
-        <!-- Controls -->
-        <div class="col-span-2 ml-4">
-            <h2 class="border-b border-slate-800 py-4 mb-4 text-3xl font-bold leading-none tracking-tight md:text-4xl lg:text-4xl text-cyan-100 ">Controls</h1>
-            <div class="border-b border-slate-800">
-                <div class="flex gap-3 mb-4">
-                    <label class="switch">
-                        <input id="turn_off" value="1" name="turn_off" type="checkbox" onclick="toggleOffSwitch()"/>
-                        <span class="slider round"></span>
-                    </label>
-                    <label for="turn_off" class="form-label text-cyan-500">Show Video</label><br>
-                </div>
-                <div class="flex gap-3 mb-4">
-                    <label class="switch">
-                        <input id="run_detection" value="0" name="run_detection" type="checkbox"
-                               onclick="toggleDetSwitch()"/>
-                        <span class="slider round"></span>
-                    </label>
-                    <label for="run_detection" class="form-label text-cyan-500">Run Detection</label><br>
-                </div>
-                <div class="flex gap-3 mb-4">
-                    <label class="switch">
-                        <input id="mediapipe" value="0" name="mediapipe" type="checkbox"
-                               onclick="toggleMediaPipeSwitch()"/>
-                        <span class="slider round"></span>
-                    </label>
-                    <label for="mediapipe" class="form-label text-cyan-500">Show Landmark</label><br>
-                </div>
-                <div class="flex gap-3 mb-4">
-                    <label class="switch">
-                        <input id="flip-horizontal" value="0" name="flip-horizontal" type="checkbox"
-                               onclick="toggleHSwitch()"/>
-                        <span class="slider round"></span>
-                    </label>
-                    <label for="flip-horizontal" class="form-label text-cyan-500">Flip Video</label><br>
-                </div>
-            </div>
-            <div class="gap-3 py-4 text-center border-b border-slate-800 mb-5">
-                <form action="/" method="POST" style="text-align: center;" class="mb-4" >
-                    <label for="slider" class="form-label text-cyan-500">Confidence Threshold</label>
-                    <input type="range" id="slider" name="slider" min="1" max="100">
-                </form>
-                <input type="hidden" id="sliderValue" name="sliderValue" value="75">
-                <span class="rounded-lg py-2 px-3 bg-slate-800 text-cyan-500" id="conf_display">75</span>
-            </div>
-            <button class="text-white focus:ring-4 focus:outline-none mt-1.5 font-medium rounded-lg text-sm w-full py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" id="stop-button" type="button" onclick="stopProcess('Stop Request')">Back to Homepage</button>
-        </div>
-
-        <!-- Video -->
-        <div class="col-span-8 mx-4 mt-3">
-            <div id="container">
-                <img class="center" src="/video_feed" id="videoElement">
+<body style="background-color: #0a0a0a;">
+    <div class="h-screen flex flex-col p-4 overflow-hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4 px-1">
+            <button 
+                id="stop-button" 
+                type="button" 
+                onclick="stopProcess('Stop Request')"
+                class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2"
+                style="background-color: #262626; color: #a3a3a3; border: 1px solid #2e2e2e;"
+                onmouseover="this.style.backgroundColor='#303030'; this.style.color='#ffffff';"
+                onmouseout="this.style.backgroundColor='#262626'; this.style.color='#a3a3a3';"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <h1 class="text-lg font-semibold text-white">BISINDO Translator</h1>
             </div>
         </div>
 
-        <!-- Terminal -->
-        <div class="col-span-2 mr-4">
-            <h2 class="border-b border-slate-800 py-4 mb-4 text-3xl flex justify-end font-bold leading-none tracking-tight md:text-4xl lg:text-4xl text-cyan-100 ">Output</h1>
-            <div id="terminal" class="w-full"></div>
+        <!-- Main Grid - 2 columns -->
+        <div class="flex-1 grid grid-cols-12 gap-4 min-h-0">
+            
+            <!-- Left Sidebar: Settings + Detection Log -->
+            <div class="col-span-12 lg:col-span-3 flex flex-col gap-4 overflow-hidden">
+                <!-- Settings Panel -->
+                <div class="rounded-xl p-4" style="background-color: #171717; border: 1px solid #2e2e2e;">
+                    <h2 class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Settings</h2>
+                    
+                    <!-- Hidden auto-enabled toggles -->
+                    <div style="display: none;">
+                        <input id="turn_off" value="1" name="turn_off" type="checkbox" checked/>
+                        <input id="run_detection" value="1" name="run_detection" type="checkbox" checked/>
+                    </div>
+                    
+                    <!-- Visible Toggle Options -->
+                    <div class="space-y-3">
+                        <!-- Show Landmark (default ON) -->
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid #262626;">
+                            <label for="mediapipe" class="text-sm text-neutral-300">Show Landmark</label>
+                            <label class="switch">
+                                <input id="mediapipe" value="1" name="mediapipe" type="checkbox" checked onclick="toggleMediaPipeSwitch()"/>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- Flip Video -->
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid #262626;">
+                            <label for="flip-horizontal" class="text-sm text-neutral-300">Flip Video</label>
+                            <label class="switch">
+                                <input id="flip-horizontal" value="0" name="flip-horizontal" type="checkbox" onclick="toggleHSwitch()"/>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Confidence Slider -->
+                    <div class="mt-4 pt-3" style="border-top: 1px solid #262626;">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm text-neutral-300">Confidence</label>
+                            <span class="text-sm font-mono font-medium text-emerald-500" id="conf_display">75</span>
+                        </div>
+                        <form action="/" method="POST">
+                            <input type="range" id="slider" name="slider" min="1" max="100" value="75" class="w-full slider-progress" style="background: linear-gradient(to right, #10b981 75%, #262626 75%);">
+                        </form>
+                        <input type="hidden" id="sliderValue" name="sliderValue" value="75">
+                    </div>
+                </div>
+                
+                <!-- Detection Log Panel -->
+                <div class="rounded-xl p-4 flex-1 flex flex-col min-h-0" style="background-color: #171717; border: 1px solid #2e2e2e;">
+                    <h2 class="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Detection Log</h2>
+                    <div id="terminal" class="flex-1 min-h-0 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Right Content: Video + Result -->
+            <div class="col-span-12 lg:col-span-9 flex flex-col gap-4 min-h-0">
+                <!-- Video Container -->
+                <div class="flex-1 min-h-0">
+                    <div id="container" class="h-full">
+                        <img class="center" src="/video_feed" id="videoElement" alt="Video Feed">
+                    </div>
+                </div>
+                
+                <!-- Result Section - Larger -->
+                <div class="rounded-xl p-5" style="background-color: #171717; border: 1px solid #2e2e2e;">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Result</h2>
+                        <button 
+                            type="button" 
+                            onclick="resetResult()"
+                            class="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
+                            style="background-color: #262626; color: #a3a3a3; border: 1px solid #2e2e2e;"
+                            onmouseover="this.style.backgroundColor='#303030'; this.style.color='#ffffff';"
+                            onmouseout="this.style.backgroundColor='#262626'; this.style.color='#a3a3a3';"
+                        >
+                            Reset
+                        </button>
+                    </div>
+                    <p id="finalSentencePara" class="text-xl text-white font-medium min-h-[84px] leading-7"></p>
+                    <p class="text-xs text-neutral-500 mt-3">Collecting every 10 consecutive occurrences of the same word</p>
+                </div>
+            </div>
         </div>
     </div>
-    <!-- Final Senctence -->
-    <div class="flex items-center mx-12 text-center content-start gap-4 border-b border-slate-700 py-4 justify-center">
-        <span class="text-center inline-block px-3 py-1 text-xs font-bold tracking-wide text-slate-900 bg-blue-500 rounded-full">Collecting every 10 consecutive occurrences of the same word</span>
-    </div>
+    
+    <script>
+        // Override the appendToTerminal function for new styling
+        function appendToTerminal(message) {
+            var terminal = document.getElementById("terminal");
+            var div = document.createElement("div");
+            div.className = "detection-row";
+            div.innerHTML = `<span class="detection-word">${message[0]}</span><span class="detection-conf">${message[1]}</span>`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
 
-    <div>
-        <p id="finalSentencePara" class="text-cyan-200 mt-4 text-center">
-        </p>
-    </div>
+            if (typeof consecutiveWords === 'undefined') {
+                window.consecutiveWords = [];
+                window.finalSentence = "";
+                window.wordCounter = 0;
+            }
+
+            if (consecutiveWords.length === 0 || consecutiveWords[consecutiveWords.length - 1] === message[0]) {
+                consecutiveWords.push(message[0]);
+                wordCounter++;
+            } else {
+                consecutiveWords = [message[0]];
+                wordCounter = 1;
+            }
+
+            if (wordCounter >= 7 && message[0] !== "G") {
+                finalSentence += (finalSentence.length > 0 ? " " : "") + consecutiveWords[0];
+                document.getElementById("finalSentencePara").innerText = finalSentence;
+                consecutiveWords = [];
+                wordCounter = 0;
+            }
+        }
+        
+        // Auto-enable video, detection, and landmark on page load
+        $(document).ready(function() {
+            // Enable video preview
+            $.getJSON("/request_preview_switch", function(data) {});
+            
+            // Enable detection
+            $.getJSON("/request_run_model_switch", function(data) {});
+            
+            // Enable mediapipe/landmark
+            $.getJSON("/request_mediapipe_switch", function(data) {});
+        });
+        
+        // Reset result function
+        function resetResult() {
+            document.getElementById("finalSentencePara").innerText = "";
+            document.getElementById("terminal").innerHTML = "";
+            window.consecutiveWords = [];
+            window.finalSentence = "";
+            window.wordCounter = 0;
+        }
+    </script>
 </body>
 </html>

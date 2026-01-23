@@ -22,7 +22,7 @@ stop_flag = False
 class VideoStreaming(object):
     def __init__(self):
         super(VideoStreaming, self).__init__()
-        print ("===== Video Streaming =====")
+        # print ("===== Video Streaming =====")
         self._preview = False
         self._flipH = False
         self._detect = False
@@ -73,7 +73,7 @@ class VideoStreaming(object):
         self._mediaPipe = bool(value)
 
     def show(self, url):
-        print(url)
+        # print(url)
         self._preview = False
         self._flipH = False
         self._detect = False
@@ -101,7 +101,7 @@ class VideoStreaming(object):
         while True:
             if self._preview:
                 if stop_flag:
-                    print("Process Stopped")
+                    # print("Process Stopped")
                     return
 
                 grabbed, frame = cap.read()
@@ -172,13 +172,13 @@ def homepage():
 
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-    print("index")
+    # print("index")
     global stop_flag
     stop_flag = False
     if request.method == 'POST':
-        print("Index post request")
+        # print("Index post request")
         url = request.form['url']
-        print("index: ", url)
+        # print("index: ", url)
         session['url'] = url
         return redirect(url_for('index'))
     return render_template('index.html')
@@ -186,7 +186,7 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     url = session.get('url', None)
-    print("video feed: ", url)
+    # print("video feed: ", url)
     if url is None:
         return redirect(url_for('homepage'))
 
@@ -196,25 +196,25 @@ def video_feed():
 @app.route("/request_preview_switch")
 def request_preview_switch():
     VIDEO.preview = not VIDEO.preview
-    print("*"*10, VIDEO.preview)
+    # print("*"*10, VIDEO.preview)
     return "nothing"
 
 @app.route("/request_flipH_switch")
 def request_flipH_switch():
     VIDEO.flipH = not VIDEO.flipH
-    print("*"*10, VIDEO.flipH)
+    # print("*"*10, VIDEO.flipH)
     return "nothing"
 
 @app.route("/request_run_model_switch")
 def request_run_model_switch():
     VIDEO.detect = not VIDEO.detect
-    print("*"*10, VIDEO.detect)
+    # print("*"*10, VIDEO.detect)
     return "nothing"
 
 @app.route("/request_mediapipe_switch")
 def request_mediapipe_switch():
     VIDEO.mediaPipe = not VIDEO.mediaPipe
-    print("*"*10, VIDEO.mediaPipe)
+    # print("*"*10, VIDEO.mediaPipe)
     return "nothing"
 
 @app.route('/update_slider_value', methods=['POST'])
@@ -225,14 +225,16 @@ def update_slider_value():
 
 @app.route('/stop_process')
 def stop_process():
-    print("Process stop Request")
+    # print("Process stop Request")
     global stop_flag
     stop_flag = True
     return 'Process Stop Request'
 
 @socketio.on('connect')
 def test_connect():
-    print('Connected')
+    # print('Connected')
+    pass
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5001, debug=True)
+
