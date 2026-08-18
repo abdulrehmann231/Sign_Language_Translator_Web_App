@@ -123,6 +123,13 @@ There are **two independent detection problems** in this product. They have very
 
 > This change will be developed in a **new, empty repository**. This section makes the PRD self-contained: it lists exactly what to copy from the current repo and which external libraries/models/datasets to pull, so nothing here depends on being able to browse the old repo.
 
+### Set up OpenSpec + this PRD in the new repo (do this first)
+1. In the new empty repo run `npx @fission-ai/openspec init --tools claude` (creates `openspec/` + the `/opsx` commands).
+2. Copy this whole change folder into it: `openspec/changes/add-signlang-learning-suite/` (all of `proposal.md`, `design.md`, `tasks.md`, `frontend.md`, and `specs/`).
+3. Optional: copy `openspec/config.yaml` for the shared project context.
+4. Verify with `openspec validate add-signlang-learning-suite --strict`.
+5. Frontend can start right away from `frontend.md`; backend starts from `tasks.md`.
+
 ### Copy from the current repo (source of truth for reuse)
 - **`yolov8n.pt`** (~6.3 MB) — YOLOv8-nano COCO detector. **Reuse directly** for Feature 2 primary object detection (school/daily objects + boxes). If not copied, `ultralytics` re-downloads it by name.
 - **`app.py`** — reference implementation of the Flask + Socket.IO MJPEG streaming loop, YOLO inference per frame, and **MediaPipe Hands landmark extraction/drawing**. Reuse the camera-stream + landmark plumbing for `fingerspelling-recognition` and Feature 2 capture. (Do not copy its BISINDO-specific logic except for Feature 4.)

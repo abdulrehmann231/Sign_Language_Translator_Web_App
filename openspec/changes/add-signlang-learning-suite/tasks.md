@@ -65,9 +65,22 @@
 
 - [ ] 9.1 Keep the reviewed spec current; document research findings on word/sentence-level Indonesian sign translation (no implementation this change)
 
-## 10. Integration, privacy & verification
+## 10. Frontend track (parallel, mock-first — see `frontend.md`)
 
-- [ ] 10.1 Add routes/pages/navigation into the existing Flask app and templates (login, learn, capture, quiz, videos)
-- [ ] 10.2 Add camera/photo consent copy and in-memory-only frame handling (retain nothing by default)
-- [ ] 10.3 Run `openspec validate add-signlang-learning-suite --strict` and resolve findings
-- [ ] 10.4 End-to-end test each flow: login → data isolation; card → sign → deck; capture → sign → deck; deck → quiz (word/letter/number) → mastery; video → completion → quiz
+> Can start immediately, before any backend exists, by building against the mock API contract in `frontend.md`.
+
+- [ ] 10.1 App shell, routing, and mock API client + `SignService`/`DetectService` stubs returning the sample JSON
+- [ ] 10.2 Auth screens (register/login/logout) + session store + route guards
+- [ ] 10.3 Home dashboard + `/deck` list (mock deck)
+- [ ] 10.4 Feature 1 card flow: 4 options, tile flip text→picture, fingerspelling reference, mock `SignPad`
+- [ ] 10.5 Feature 5 videos: player + Indonesian captions toggle + post-video quiz hook
+- [ ] 10.6 Feature 3 `QuizRunner` for word/letter/number modes + results screen
+- [ ] 10.7 Feature 2 capture UI + bounding-box overlay + retake path
+- [ ] 10.8 Swap mock services for the real REST/Socket.IO endpoints once backend lands
+
+## 11. Integration, privacy & verification
+
+- [ ] 11.1 Wire frontend to real routes/endpoints (login, learn, capture, quiz, videos) and Socket.IO sign events
+- [ ] 11.2 Add camera/photo consent copy and in-memory-only frame handling (retain nothing by default)
+- [ ] 11.3 Run `openspec validate add-signlang-learning-suite --strict` and resolve findings
+- [ ] 11.4 End-to-end test each flow: login → data isolation; card → sign → deck; capture → sign → deck; deck → quiz (word/letter/number) → mastery; video → completion → quiz
