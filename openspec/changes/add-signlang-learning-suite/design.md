@@ -91,11 +91,11 @@ There are **two independent detection problems** in this product. They have very
 
 ## Risks / Trade-offs
 
-- **ASL vs BISINDO mismatch** → The whole learning UX assumes fingerspelling; if the product must be BISINDO end-to-end, reference assets and the alphabet recognizer must be BISINDO. Mitigation: keep the alphabet pluggable and confirm the default early (Open Question).
-- **Fingerspelling accuracy for lookalike letters** → false negatives frustrate learners. Mitigation: require stability over consecutive frames, show the expected letter, allow unlimited retries, and tune thresholds; consider a "skip letter" affordance.
-- **Object detection gaps** → Feature 2 fails on out-of-vocabulary objects. Mitigation: clear "not recognized, retake" path and a classification fallback; constrain to supported categories in v1.
+- **Teaching ASL to an Indonesian audience** → ASL (confirmed) is not Indonesia's local sign language (BISINDO), so learners acquire a foreign manual alphabet; the app is framed as ASL learning. Mitigation: label lessons clearly as ASL; keep reference assets and the classifier ASL-specific and correct.
+- **Fingerspelling accuracy for lookalike letters/numbers** → false negatives frustrate learners. Mitigation: train on enough per-class samples, require stability over consecutive frames, show the expected target, allow unlimited retries, tune thresholds; consider a "skip" affordance.
+- **Object detection gaps / open-vocabulary quality** → Feature 2 may mislabel or miss uncommon objects, and the free open-vocab fallback + free translator vary in quality. Mitigation: clear "not recognized, retake" path, prefer the curated dictionary when available, and cap latency; treat the fallback as best-effort.
 - **Camera privacy** → Mitigation: explicit consent, process frames in-memory, retain nothing by default; state this in the UI.
-- **No real auth** → decks could be spoofed with a guessable id. Mitigation: acceptable for v1 learning tool; revisit if data sensitivity grows.
+- **Lightweight auth** → name/email/password is minimal; risks include weak passwords and no email verification in v1. Mitigation: hash passwords, basic strength/format checks; add verification/reset later if needed.
 - **Distractor quality in Feature 1** → poor distractors make guessing trivial. Mitigation: curate distractors within the same category in the dictionary.
 
 ## Resolved Decisions
