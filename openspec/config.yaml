@@ -2,19 +2,26 @@ schema: spec-driven
 
 # Project context (shown to AI collaborators when creating artifacts).
 context: |
-  Product: an interactive American Sign Language (ASL) *learning* app built on top
-  of an existing BISINDO sign-language translator (Flask + Socket.IO in app.py;
-  YOLOv8 `bisindo.pt` and `yolov8n.pt`; MediaPipe Hands; templates/ + static/).
-  Goal: let students learn Indonesian↔English vocabulary and physically produce ASL
-  signs — the manual alphabet (A–Z) AND numbers (0–9) — verified live via camera,
-  learn from letter/number video lessons, and quiz on their learned deck.
-  CONFIRMED: the sign system taught and recognized is ASL (letters + numbers).
-  Hard constraint: reuse existing computer-vision tech — do NOT train new models
-  from scratch (MediaPipe Hands landmarks + an existing pre-trained ASL alphabet/
-  number classifier or a landmark template/KNN matcher covers letters and numbers).
-  Under review only (not implementation): Feature 4, camera BISINDO → Indonesian/
-  English text — reliable word/sentence-level Indonesian sign translation has no
-  proven off-the-shelf tech yet; research ongoing, may revisit later.
+  Product: an interactive American Sign Language (ASL) *learning* app. It will be
+  built in a NEW, EMPTY repo, reusing assets from an existing BISINDO translator
+  (Flask + Socket.IO app.py; YOLOv8 yolov8n.pt / bisindo.pt; MediaPipe Hands;
+  templates/ + static/). The PRD lists exact carry-over files + external refs in
+  design.md → "Reusable Assets & External References" — keep the doc self-contained.
+  Goal: students learn Indonesian↔English vocabulary and physically produce ASL
+  signs — manual alphabet (A–Z) AND numbers (0–9) — verified live via camera, learn
+  from letter/number video lessons, and quiz on their deck.
+  CONFIRMED decisions: sign system = ASL letters + numbers; login = lightweight
+  name/email/password (hashed); Feature 2 detects school/daily objects WITH a
+  bounding box via YOLOv8, plus a FREE open-vocabulary fallback (YOLO-World /
+  Grounding DINO, or YOLO-box + torchvision ImageNet classifier) since objects are
+  not fixed; open object labels are translated EN→ID with a FREE translator (Argos
+  Translate offline / MyMemory / LibreTranslate); ASL recognizer = a SMALL classifier
+  TRAINED on MediaPipe-landmark features from public ASL datasets (KNN fallback) —
+  only this small head is trained, MediaPipe itself is reused; videos = Indonesian
+  narration WITH toggleable Indonesian captions (may be AI-generated via Whisper).
+  Under review only (NOT implemented): Feature 4, camera BISINDO → Indonesian/English
+  text — reliable word/sentence-level sign translation has no proven off-the-shelf
+  tech; research ongoing, may revisit later.
   Active planning: openspec/changes/add-signlang-learning-suite/ (PRD package).
   Conventions: kebab-case capability paths; flat specs/ layout; conventional commits.
 

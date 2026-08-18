@@ -1,15 +1,17 @@
 ## 1. Foundations & shared data
 
+- [ ] 1.0 Bootstrap the new repo: copy carry-over assets per `design.md` → Reusable Assets (`yolov8n.pt`, `app.py` camera+MediaPipe plumbing, `templates/`, `static/`) and set up deps (Flask, Flask-SocketIO, mediapipe, opencv, torch/torchvision, ultralytics)
 - [ ] 1.1 Assemble the curated static Indonesian↔English dictionary with per-word picture assets and per-word distractor sets (covers card vocabulary + the ~80 YOLO labels)
 - [ ] 1.2 Assemble the ASL reference images for every letter (A–Z) and number (0–9)
-- [ ] 1.3 Record the two ASL lesson videos (letters, numbers) with Indonesian narration; add optional Indonesian caption tracks for accessibility
+- [ ] 1.3 Record the two ASL lesson videos (letters, numbers) with Indonesian narration; generate/review Indonesian caption tracks (e.g. Whisper → WebVTT)
 - [ ] 1.4 Choose and provision the persistence store (SQLite or per-student file store)
 
-## 2. Student account (lightweight login)
+## 2. Student account (name / email / password login)
 
-- [ ] 2.1 Implement lightweight sign-in / first-time registration and session handling per `student-account` spec
-- [ ] 2.2 Scope decks, mastery, and video progress to the signed-in student and keep them private
-- [ ] 2.3 Implement sign-out and verify data is hidden until next sign-in
+- [ ] 2.1 Implement registration (name, email, password) with unique-email check and hashed password storage per `student-account` spec
+- [ ] 2.2 Implement email+password sign-in, session handling, and sign-out
+- [ ] 2.3 Scope decks, mastery, and video progress to the signed-in student and keep them private
+- [ ] 2.4 Verify wrong-credential rejection and that data is hidden until next sign-in
 
 ## 3. Learner deck capability
 
@@ -21,12 +23,12 @@
 ## 4. ASL recognition capability (shared — letters + numbers)
 
 - [ ] 4.1 Add camera-consent gate before capture
-- [ ] 4.2 Extract + normalize MediaPipe Hands landmarks; build the no-training KNN/template ASL recognizer over reference landmarks covering A–Z and 0–9
-- [ ] 4.3 Implement single-letter and single-number match reporting against an expected target
-- [ ] 4.4 Implement the letter-by-letter word verifier state machine with consecutive-frame stability
-- [ ] 4.5 Handle the motion letters "J" and "Z" (animated reference + relaxed/start-end-pose match)
-- [ ] 4.6 Emit progress feedback (matched letters/numbers + current expected target) to the UI
-- [ ] 4.7 (Fallback, only if accuracy is low) light fine-tune of a small classifier on public ASL datasets
+- [ ] 4.2 Extract + normalize MediaPipe Hands landmarks; assemble training data from public ASL datasets (ASL Alphabet, Sign Language MNIST, ASL digits) + a few self-recorded samples
+- [ ] 4.3 Train the small landmark classifier (MLP/SVM) covering A–Z and 0–9; keep a KNN/template matcher as the zero-data bootstrap + offline fallback
+- [ ] 4.4 Implement single-letter and single-number match reporting against an expected target
+- [ ] 4.5 Implement the letter-by-letter word verifier state machine with consecutive-frame stability
+- [ ] 4.6 Handle the motion letters "J" and "Z" (animated reference + relaxed/start-end-pose match)
+- [ ] 4.7 Emit progress feedback (matched letters/numbers + current expected target) to the UI
 
 ## 5. Feature 1 — word-card learning
 
@@ -37,10 +39,11 @@
 
 ## 6. Feature 2 — camera object learning
 
-- [ ] 6.1 Photo capture UI and object detection via the existing YOLOv8 (COCO 80 classes) for v1
-- [ ] 6.2 Resolve detected object to Indonesian + English words via the curated dictionary; handle "not recognized / retake"
-- [ ] 6.3 Show ASL fingerspelling reference for the detected word
-- [ ] 6.4 Wire the signing step; mark learned and add to deck (skip duplicates)
+- [ ] 6.1 Photo capture UI + YOLOv8 detection with a bounding box (school/daily objects); "not recognized / retake" path
+- [ ] 6.2 Add the free open-vocabulary fallback for objects outside COCO (YOLO-World/Grounding DINO, or YOLO-box + torchvision ImageNet classifier on the crop)
+- [ ] 6.3 Resolve detected object to Indonesian + English words: curated dictionary first, else translate the English label via the free translator (Argos Translate offline / MyMemory)
+- [ ] 6.4 Show ASL fingerspelling reference for the detected word
+- [ ] 6.5 Wire the signing step; mark learned and add to deck (skip duplicates)
 
 ## 7. Feature 3 — sign quiz
 
@@ -54,7 +57,7 @@
 ## 8. Feature 5 — ASL video lessons
 
 - [ ] 8.1 Build the videos section listing the ASL letters and ASL numbers lessons
-- [ ] 8.2 Play the Indonesian-narration videos (with optional Indonesian captions) and track watch-to-end completion per student
+- [ ] 8.2 Play the Indonesian-narration videos with toggleable Indonesian captions and track watch-to-end completion per student
 - [ ] 8.3 On letters-video completion, launch a letter quiz; on numbers-video completion, launch a number quiz
 - [ ] 8.4 Record post-video quiz results against the lesson
 

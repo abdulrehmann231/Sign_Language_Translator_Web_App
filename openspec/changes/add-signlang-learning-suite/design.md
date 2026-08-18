@@ -5,21 +5,22 @@ The app today is a Flask + Socket.IO server (`app.py`) that streams webcam/YouTu
 ## Goals / Non-Goals
 
 **Goals:**
-- Reuse the existing detection stack (YOLOv8, MediaPipe) and add an off-the-shelf recognizer for object detection and for the **ASL alphabet + numbers**.
+- Reuse the existing detection stack (YOLOv8, MediaPipe) and **train a small classifier** on MediaPipe landmarks for the **ASL alphabet + numbers**.
 - Teach and recognize **ASL** — the manual alphabet (A–Z) **and numbers (0–9)** — as the single, confirmed sign system for the learning flows.
-- Introduce lightweight per-student persistence (deck + mastery + video completion) without a full auth system.
+- Detect **school and daily objects with bounding boxes** (YOLOv8), with a free open-vocabulary fallback for arbitrary objects.
+- Provide lightweight name/email/password login and per-student persistence (deck + mastery + video completion) without an enterprise auth system.
 - Make `fingerspelling-recognition` a single shared recognizer (letters and numbers) consumed by Features 1, 2, 3, and the video quizzes.
 
 **Non-Goals:**
-- Training a recognition model **from scratch** (a light fine-tune of an existing classifier on public ASL datasets is acceptable if accuracy demands it — see Architecture).
-- Full account system (email/password, social login). A simple student identifier is enough for v1.
-- Implementing Feature 4 — it stays a reviewed, research-only spec.
-- Continuous (non-fingerspelling) sign production grading — v1 grades static ASL letters and numbers only (note: ASL "J" and "Z" involve motion and are handled as the small motion exception in Architecture).
+- Training the hand-detection/vision model from scratch — only a **small classifier head** over MediaPipe landmarks is trained.
+- Full/enterprise auth (SSO, roles, org management) — v1 is a lightweight name/email/password login.
+- Implementing Feature 4 — it stays a reviewed, research-only spec (no training of a BISINDO word/sentence model in this change).
+- Continuous (non-fingerspelling) sign production grading — v1 grades static ASL letters and numbers only (ASL "J"/"Z" motion handled as the small exception in Architecture).
 
 ## Decisions
 
-**1. ASL letter + number recognition via existing tech (MediaPipe Hands + a pre-built classifier or landmark matcher).**
-Rationale: The manual alphabet and digits are a well-solved, ~36-class static-hand-pose problem (26 letters + 10 numbers). MediaPipe Hands already ships in the repo for landmark extraction; landmarks can feed an existing open ASL alphabet/number classifier or a small KNN/template matcher over reference landmarks — no from-scratch training. See the Sign Detection Architecture section for the full pipeline and the training-vs-no-training answer. Alternative considered: a full sign-language-production model (rejected — needs training and continuous-motion data).
+**1. ASL letter + number recognition = MediaPipe Hands landmarks + a small trained classifier.**
+Rationale: The manual alphabet and digits are a well-solved, ~36-class static-hand-pose problem (26 letters + 10 numbers). MediaPipe Hands already ships in the repo for landmark extraction; the team opted in to **training a small 36-class classifier** over those landmarks (public ASL datasets + a few self-recorded samples). A KNN/template matcher is the zero-data bootstrap and offline fallback. Only the small classifier head is trained — MediaPipe itself is reused as-is. See the Sign Detection Architecture section for the full pipeline. Alternative considered: a full sign-language-production model (rejected — needs continuous-motion data and is unsolved, that is Feature 4).
 
 **2. Object detection reuses YOLOv8, with an image-classification fallback for broad coverage.**
 Rationale: `yolov8n.pt` (COCO, 80 classes) is already present and covers many everyday objects for Feature 2. For objects outside those classes, fall back to an off-the-shelf image classifier / vision API. Alternative: retrain YOLO on a custom object set (rejected — training).
@@ -67,17 +68,18 @@ There are **two independent detection problems** in this product. They have very
 **Pipeline (per camera frame):**
 1. **Hand localization + landmarks — MediaPipe Hands (already in the repo).** For each frame it returns 21 3-D hand landmarks. This does the hard vision work for us and is pre-trained.
 2. **Normalize landmarks.** Translate to a wrist-origin, scale by hand size, and (optionally) mirror for handedness, so the features are position/'distance-from-camera' invariant. Result: a small fixed-length feature vector per frame.
-3. **Classify the pose → a letter or number.** Two viable options, both avoiding from-scratch training:
-   - **(Recommended, zero training) Landmark template / KNN matcher.** Store a handful of reference landmark vectors per class (captured once, or from a public dataset) and match the live vector by nearest-neighbor / cosine similarity. Adding numbers is just adding 10 more classes of reference samples. Fully transparent and easy to tune.
-   - **(Also fine) An existing pre-trained ASL classifier.** Reuse an off-the-shelf ASL alphabet/number model (there are public models and datasets such as ASL alphabet sets, Sign Language MNIST for letters, and ASL digit sets). If a single model doesn't cover both letters and numbers, combine a letter model and a number model, or fall back to the KNN approach which covers both uniformly.
+3. **Classify the pose → a letter or number.** Chosen approach and fallback:
+   - **(Chosen) Train a small landmark classifier for all 36 classes.** Feed the normalized landmark vectors to a small model (MLP or SVM) trained on **public ASL datasets** (ASL Alphabet, Sign Language MNIST, an ASL digits set) plus a handful of self-recorded samples. Training is tiny (a small head over 21×(x,y,z) features), runs in minutes, and infers in real time. One model covers A–Z and 0–9.
+   - **(Zero-data quick-start / offline fallback) Landmark template / KNN matcher.** Store a few reference landmark vectors per class and match by nearest-neighbor / cosine similarity — no training. Use this to bootstrap before the trained model exists, or as an offline fallback.
 4. **Temporal stability gate.** Require the same predicted class across N consecutive frames above a confidence threshold before accepting it — this reuses the existing "accumulate over frames" idea and kills flicker/false positives.
 5. **Verifier state machine.** For a word, hold a pointer to the expected next letter; accept and advance only when step 4 confirms that letter. For a single-letter or single-number quiz item, one confirmed match scores it.
 
-**Do we need to train a model? — Short answer: NO (not from scratch).**
-- MediaPipe already provides the trained hand-detection/landmark model.
-- The 36-class letter+number classifier can be a **no-training KNN/template matcher** over landmarks, or an **existing pre-trained** classifier.
-- **Optional, only if accuracy is insufficient:** a *light fine-tune* of a small classifier head on **public** ASL datasets (minutes on a CPU/GPU, no data collection or architecture design). That's an upgrade path, not a prerequisite.
-- **Motion exception:** ASL "J" and "Z" (and no numbers) involve movement. Handle them as a tiny special case — match the letter's start-and-end poses in sequence, or, for v1 simplicity, present them with a short animated reference and a relaxed match. Everything else is static.
+**Do we need to train a model? — Short answer: YES, but only a small one (the team opted in), and never from scratch on the vision.**
+- MediaPipe already provides the trained hand-detection/landmark model — we do NOT train that.
+- We train only a **small 36-class classifier head** on top of MediaPipe landmarks, using public ASL datasets (minimal data collection, minutes to train on CPU/GPU). This is the accuracy path the team chose over pure KNN.
+- The **KNN/template matcher remains available** with zero training to bootstrap and as an offline fallback, so development is never blocked on the trained model.
+- This training scope is limited to ASL letters+numbers. It does **not** apply to Feature 4 (BISINDO words/sentences), which stays unsolved and out of scope (see § B).
+- **Motion exception:** ASL "J" and "Z" (numbers are all static) involve movement. Handle them as a tiny special case — match the letter's start-and-end poses in sequence, or, for v1 simplicity, present a short animated reference with a relaxed match. Everything else is static.
 
 **Adding numbers changes almost nothing:** numbers 0–9 are additional static classes fed through the exact same pipeline — 10 more sets of reference landmarks (KNN) or 10 more labels (classifier). The recognizer, the stability gate, and the verifier are unchanged.
 
@@ -100,14 +102,45 @@ There are **two independent detection problems** in this product. They have very
 
 - **Sign system: ASL, letters AND numbers (CONFIRMED).** Features 1, 2, 3, and 5 teach and recognize the ASL manual alphabet (A–Z) and numbers (0–9). BISINDO is only referenced by the review-only Feature 4.
 - **Feature 4: research-only (CONFIRMED).** Not implemented in this change; kept as a documented spec pending research (see Architecture § B).
-- **Student identity: lightweight login (CONFIRMED).** A minimal sign-in (e.g. username/display name + simple credential, or a class code) identifies a student so their deck, mastery, and video completion persist and stay isolated. Explicitly NOT a full/enterprise auth system (no SSO, roles, or heavy account-recovery flows). Captured in the new `student-account` capability.
-- **Feature 2 object scope: start with YOLOv8's 80 COCO classes (CONFIRMED for v1).** `yolov8n.pt` is already in the repo, reliable, offline, and localizes objects. An image-classification fallback for broader coverage is a **later** enhancement, added only if learners hit "not recognized" too often — not v1.
-- **Indonesian↔English source: curated static dictionary (CONFIRMED for v1).** Because each word also needs a picture and three quality distractors — which a translation API cannot provide — a hand-curated dictionary (English, Indonesian, picture, distractors) is the source of truth. It only needs to cover the card vocabulary plus the ~80 YOLO labels. A **free translation API (e.g. LibreTranslate / MyMemory) is an optional later fallback**, used solely to auto-translate a detected object label that is not yet in the dictionary; not required for v1.
-- **ASL recognizer: KNN / landmark matcher over MediaPipe Hands (CONFIRMED for v1).** MediaPipe landmarks already ship in the repo; a nearest-neighbor match over a few reference samples per sign covers all 36 letters+numbers uniformly with zero training. Preferred over a pre-trained classifier because most ready-made ASL models are letters-only (numbers would need a second model). Fallback if look-alike accuracy is weak: a light fine-tune of a small classifier on public ASL datasets (see Architecture § A).
-- **Videos: recorded in Indonesian narration; Indonesian captions optional but recommended (CONFIRMED).** The team records the two lessons with spoken-Indonesian instruction. Because part of the audience is deaf/hard-of-hearing, on-screen Indonesian text/captions are strongly recommended for accessibility, but not a hard requirement for v1.
+- **Student identity: lightweight login with name + email + password (CONFIRMED).** A student registers and signs in with a display name, email, and password; their deck, mastery, and video progress persist and stay private. Explicitly NOT a full/enterprise auth system (no SSO, roles, org management). Passwords MUST be stored hashed. Captured in the `student-account` capability.
+- **Feature 2 focus + detection: school and daily objects, always with a bounding box (CONFIRMED).**
+  - **Primary detector:** the existing **YOLOv8** (`yolov8n.pt`, COCO 80 classes) — it draws the bounding box and already covers many school/daily objects (book, laptop, cell phone, scissors, keyboard, mouse, backpack, bottle, cup, chair, clock, …).
+  - **Free open-vocabulary fallback (objects are NOT fixed):** for objects outside COCO, use a **free** path that still yields a box — either an open-vocabulary detector (**YOLO-World** via Ultralytics, or **Grounding DINO**) that boxes arbitrary objects from a text list, or **YOLO's box + a free ImageNet classifier** (MobileNet/EfficientNet via torchvision) run on the cropped region. Must remain free/offline-capable.
+- **Word sourcing: curated dictionary for cards + free translation for open objects (CONFIRMED).**
+  - **Feature 1 cards** use a **curated static dictionary** (English, Indonesian, picture, 3 distractors) — an API cannot supply pictures or good distractors, so these stay hand-curated.
+  - **Feature 2 open objects** translate the detected English label → Indonesian with a **free translator**. Preference order: **Argos Translate** (open-source, fully offline, en↔id, no key) → **MyMemory API** (free, no key, ~5k words/day) → self-hosted **LibreTranslate**. Feature 2 needs no distractors, so translation alone suffices there.
+- **ASL recognizer: TRAIN a small landmark classifier for A–Z + 0–9 (CONFIRMED — training accepted).** Training is now in scope for the ASL recognizer. Approach: extract MediaPipe Hands landmarks, normalize, and train a small classifier (e.g. an MLP or SVM) on **public ASL datasets** (ASL Alphabet, Sign Language MNIST, ASL digit sets) plus a few self-recorded samples, covering all 36 classes in one model. A landmark **KNN/template matcher** remains the zero-data quick-start and the offline fallback. (This "train a small classifier" scope does NOT extend to Feature 4 — see Architecture § B; that remains unsolved and out of scope.)
+- **Videos: Indonesian narration WITH Indonesian captions (CONFIRMED).** The team records the two lessons with spoken-Indonesian instruction and provides Indonesian captions (important for deaf/hard-of-hearing learners). Captions may be **AI-generated** — e.g. auto-transcribe the Indonesian audio (Whisper or similar) into a WebVTT caption track, then review.
 
 ## Open Questions
 
-- **Motion letters:** confirm the v1 handling for the moving signs "J" and "Z" (animated reference + relaxed match vs start/end-pose matching).
-- **Lightweight-login mechanism:** exact form — display name + PIN, email magic link, or a teacher-issued class code + student name? (All qualify as "lightweight"; pick per how classrooms will onboard.)
-- **Caption production:** if Indonesian captions are added, confirm the format (e.g. WebVTT) and whether they are burned-in or a toggleable track.
+- **Motion letters:** confirm v1 handling for the moving signs "J" and "Z" (animated reference + relaxed match vs start/end-pose matching).
+- **Open-vocabulary detector choice:** YOLO-World / Grounding DINO (open-vocab boxes) vs YOLO-box + ImageNet-classifier-on-crop — pick per accuracy/latency on real school/daily photos.
+- **Translator choice:** default to offline Argos Translate, or the MyMemory API? (Both free; offline avoids rate limits and network.)
+- **Caption tooling:** which AI transcription tool for the Indonesian caption track, and confirm WebVTT as a toggleable track vs burned-in.
+
+## Reusable Assets & External References (for the new repo)
+
+> This change will be developed in a **new, empty repository**. This section makes the PRD self-contained: it lists exactly what to copy from the current repo and which external libraries/models/datasets to pull, so nothing here depends on being able to browse the old repo.
+
+### Copy from the current repo (source of truth for reuse)
+- **`yolov8n.pt`** (~6.3 MB) — YOLOv8-nano COCO detector. **Reuse directly** for Feature 2 primary object detection (school/daily objects + boxes). If not copied, `ultralytics` re-downloads it by name.
+- **`app.py`** — reference implementation of the Flask + Socket.IO MJPEG streaming loop, YOLO inference per frame, and **MediaPipe Hands landmark extraction/drawing**. Reuse the camera-stream + landmark plumbing for `fingerspelling-recognition` and Feature 2 capture. (Do not copy its BISINDO-specific logic except for Feature 4.)
+- **`templates/` and `static/`** (`hompage.html`, `index.html`, `script.js`, `style.css`) — existing UI/JS patterns for the camera view, sockets, and controls; use as a starting point for the new pages.
+- **`bisindo.pt` / `bisindov2.pt`** (~22 MB each) — trained BISINDO YOLO models. **Only needed if Feature 4 is ever pursued** (review-only now); safe to leave behind otherwise.
+- **`requirements.txt`** — pinned versions to mirror (see key deps below). Note: `ultralytics` is **vendored** as the `ultralytics/` folder in the old repo, not pinned in requirements; in the new repo just `pip install ultralytics`.
+
+### Key runtime dependencies (versions currently used; a modern equivalent is fine)
+- Python ≥ 3.8 · **Flask 2.2.3** · **Flask-SocketIO 5.3.3** (+ python-socketio 5.8, python-engineio 4.4, simple-websocket)
+- **mediapipe 0.10.14** (Hands landmarks) · **opencv-python 4.6.0.66** · **numpy 1.23** · **Pillow 9.5**
+- **torch 2.0.0** · **torchvision 0.15.1** (also gives the free ImageNet classifier fallback) · **ultralytics** (YOLOv8; `pip install ultralytics`)
+- Optional: **yt-dlp** (only if keeping the old YouTube-stream feature — not required by the new features)
+
+### External libraries / models / datasets to add in the new repo
+- **Ultralytics YOLOv8 / YOLO-World** — object + open-vocabulary detection. License: **AGPL-3.0** (note for distribution). Docs: https://docs.ultralytics.com
+- **Grounding DINO** (alt open-vocab detector) — https://github.com/IDEA-Research/GroundingDINO
+- **MediaPipe Hands** — hand landmarks (Apache-2.0) — https://developers.google.com/mediapipe
+- **ASL recognizer training data** — ASL Alphabet dataset (Kaggle: grassknoted/asl-alphabet), Sign Language MNIST (Kaggle: datamunge/sign-language-mnist), and an ASL digits/numbers set; combine for A–Z + 0–9.
+- **Free translation** — Argos Translate (https://github.com/argosopentech/argos-translate, offline en↔id), MyMemory API (https://mymemory.translated.net/doc/spec.php, no key), LibreTranslate (https://github.com/LibreTranslate/LibreTranslate, self-host).
+- **Caption generation** — OpenAI Whisper or faster-whisper for Indonesian ASR → WebVTT.
+- **ASL reference images** — a public ASL fingerspelling alphabet + numbers chart set (per-letter/per-digit images) for the on-screen reference.

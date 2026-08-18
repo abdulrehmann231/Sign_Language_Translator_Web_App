@@ -17,7 +17,7 @@ The system SHALL request camera access before capturing signs and SHALL not capt
 - **AND** informs the learner that signing verification requires the camera
 
 ### Requirement: Recognize a single ASL letter
-The system SHALL recognize an individual ASL manual-alphabet letter from the camera and SHALL report whether it matches an expected letter, using existing recognition technology rather than a model trained from scratch.
+The system SHALL recognize an individual ASL manual-alphabet letter from the camera and SHALL report whether it matches an expected letter. Recognition SHALL run on hand landmarks and MAY use a small classifier trained on public ASL datasets; the hand-detection/landmark model itself is reused, not trained.
 
 #### Scenario: Correct letter signed
 - **WHEN** the expected letter is a given letter and the learner signs that letter

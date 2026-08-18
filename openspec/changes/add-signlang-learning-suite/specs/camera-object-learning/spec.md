@@ -4,24 +4,36 @@ Defines the capture-to-learn flow where a learner photographs a real-world objec
 
 ## ADDED Requirements
 
-### Requirement: Capture and detect an object
-The system SHALL let a learner capture a photo with the camera and SHALL detect the primary object in the image, mapping it to a known word.
+### Requirement: Capture and detect an object with a bounding box
+The system SHALL let a learner capture a photo with the camera, SHALL detect the primary object in the image, SHALL show a bounding box around the detected object, and SHALL resolve it to a word. Detection SHALL prioritize common school and daily objects.
 
 #### Scenario: Object is recognized
 - **WHEN** a learner captures a photo of an object the system can detect
-- **THEN** the system identifies the object and resolves it to a single word
+- **THEN** the system identifies the object, draws a bounding box around it, and resolves it to a single word
 
 #### Scenario: Object is not recognized
-- **WHEN** the system cannot confidently detect a supported object in the photo
+- **WHEN** the system cannot confidently detect an object in the photo
 - **THEN** the system informs the learner that no object was recognized
 - **AND** allows the learner to retake the photo
 
-### Requirement: Show Indonesian and English words for the object
-Once an object is detected, the system SHALL display both the Indonesian and English words for that object.
+### Requirement: Support objects beyond a fixed set
+Because the objects learners photograph are not a fixed set, the system SHALL provide a fallback detection path that can recognize objects beyond its primary class list while still drawing a bounding box.
 
-#### Scenario: Words displayed after detection
-- **WHEN** an object is successfully detected
-- **THEN** the system displays the Indonesian word and the English word for that object
+#### Scenario: Object outside the primary class list
+- **WHEN** a learner captures an object that the primary detector's class list does not include
+- **THEN** the system uses the fallback path to identify the object and draw its bounding box
+
+### Requirement: Show Indonesian and English words for the object
+Once an object is detected, the system SHALL display both the Indonesian and English words for that object. When the object's word is not in the curated dictionary, the system SHALL obtain the Indonesian word by translating the detected English label.
+
+#### Scenario: Word available in the dictionary
+- **WHEN** a detected object exists in the curated dictionary
+- **THEN** the system displays the dictionary's Indonesian and English words for that object
+
+#### Scenario: Word obtained by translation
+- **WHEN** a detected object is not in the curated dictionary
+- **THEN** the system translates the detected English label into Indonesian
+- **AND** displays the English label and the translated Indonesian word
 
 ### Requirement: Show the fingerspelling reference for the detected word
 The system SHALL display the ordered fingerspelling reference (one hand-shape image per letter) for the detected word.
