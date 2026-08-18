@@ -1,0 +1,36 @@
+schema: spec-driven
+
+# Project context (shown to AI collaborators when creating artifacts).
+context: |
+  Product: an interactive sign-language *learning* app built on top of an existing
+  BISINDO sign-language translator (Flask + Socket.IO in app.py; YOLOv8 `bisindo.pt`
+  and `yolov8n.pt`; MediaPipe Hands; templates/ + static/).
+  Goal: let students learn Indonesian↔English vocabulary and physically fingerspell
+  words, verified live via camera, and quiz on their learned deck.
+  Hard constraint: reuse existing computer-vision tech — do NOT train new models.
+  Open decision: fingerspelling alphabet is ASL (as written in Features 1–2) vs
+  BISINDO (existing app + Feature 4) — keep it configurable until product confirms.
+  Active planning: openspec/changes/add-signlang-learning-suite/ (PRD package).
+  Conventions: kebab-case capability paths; flat specs/ layout; conventional commits.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
