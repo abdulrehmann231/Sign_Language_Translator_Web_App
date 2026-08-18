@@ -39,6 +39,17 @@ The system SHALL offer a quiz mode that presents a single letter and requires th
 - **WHEN** the student signs a letter that does not match the prompted letter
 - **THEN** the system marks the item incorrect
 
+### Requirement: Sign-the-number quiz mode
+The system SHALL offer a quiz mode that presents a number (a digit 0–9) and requires the student to sign that number in ASL on camera, using the fingerspelling-recognition capability to score the answer.
+
+#### Scenario: Number signed correctly
+- **WHEN** the student is shown a number and signs it correctly in ASL
+- **THEN** the system marks the item correct
+
+#### Scenario: Number signed incorrectly
+- **WHEN** the student signs a number that does not match the prompted number
+- **THEN** the system marks the item incorrect
+
 ### Requirement: Report quiz results and update mastery
 At the end of a quiz the system SHALL report the score and SHALL update each involved word's mastery state based on performance.
 

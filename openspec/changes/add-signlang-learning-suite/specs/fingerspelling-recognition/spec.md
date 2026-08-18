@@ -1,6 +1,6 @@
 ## Purpose
 
-Defines the shared camera-based capability that captures a learner's hand signs and verifies them, letter by letter, against a target word or single letter — reused by word-card learning, camera-object learning, and quizzes.
+Defines the shared camera-based capability that captures a learner's ASL hand signs and verifies them against a target — a single letter (A–Z), a single number (0–9), or a whole word signed letter by letter — reused by word-card learning, camera-object learning, quizzes, and video quizzes.
 
 ## ADDED Requirements
 
@@ -16,8 +16,8 @@ The system SHALL request camera access before capturing signs and SHALL not capt
 - **THEN** the system does not capture video
 - **AND** informs the learner that signing verification requires the camera
 
-### Requirement: Recognize a single fingerspelled letter
-The system SHALL recognize an individual fingerspelled letter from the camera and SHALL report whether it matches an expected letter, using existing recognition technology rather than a newly trained model.
+### Requirement: Recognize a single ASL letter
+The system SHALL recognize an individual ASL manual-alphabet letter from the camera and SHALL report whether it matches an expected letter, using existing recognition technology rather than a model trained from scratch.
 
 #### Scenario: Correct letter signed
 - **WHEN** the expected letter is a given letter and the learner signs that letter
@@ -27,6 +27,18 @@ The system SHALL recognize an individual fingerspelled letter from the camera an
 - **WHEN** the learner signs a letter different from the expected letter
 - **THEN** the system reports the letter as not matched
 - **AND** indicates which letter was expected
+
+### Requirement: Recognize a single ASL number
+The system SHALL recognize an individual ASL number sign for the digits 0 through 9 from the camera and SHALL report whether it matches an expected number, using the same existing recognition technology as letters.
+
+#### Scenario: Correct number signed
+- **WHEN** the expected target is a digit 0–9 and the learner signs that number in ASL
+- **THEN** the system reports the number as matched
+
+#### Scenario: Wrong number signed
+- **WHEN** the learner signs a number different from the expected digit
+- **THEN** the system reports the number as not matched
+- **AND** indicates which number was expected
 
 ### Requirement: Verify a word letter by letter
 The system SHALL verify a target word by checking each of its letters in order and SHALL report the word as correctly signed only when every letter is matched in sequence.

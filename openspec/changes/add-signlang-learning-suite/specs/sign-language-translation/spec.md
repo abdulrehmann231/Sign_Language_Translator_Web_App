@@ -2,6 +2,8 @@
 
 Formalizes the existing real-time camera translation as a first-class capability: reading signs from the camera and rendering them as Indonesian and English text, reusing the current BISINDO detector. Scoped as review-only in this change.
 
+> **Status: UNDER REVIEW — not implemented in this change.** This capability describes only the isolated-sign behavior the existing detector already supports. Translating Indonesian sign language at the level of arbitrary **words and sentences** has no proven off-the-shelf technology today (the existing model recognizes a fixed, limited vocabulary, and reliable continuous sign-language translation remains an open research problem). Requirements below are documented for review; implementation is deferred pending further research and may be revisited later. See `design.md` → Sign Detection Architecture and Open Questions.
+
 ## ADDED Requirements
 
 ### Requirement: Translate camera signs to text

@@ -2,14 +2,19 @@ schema: spec-driven
 
 # Project context (shown to AI collaborators when creating artifacts).
 context: |
-  Product: an interactive sign-language *learning* app built on top of an existing
-  BISINDO sign-language translator (Flask + Socket.IO in app.py; YOLOv8 `bisindo.pt`
-  and `yolov8n.pt`; MediaPipe Hands; templates/ + static/).
-  Goal: let students learn Indonesian↔English vocabulary and physically fingerspell
-  words, verified live via camera, and quiz on their learned deck.
-  Hard constraint: reuse existing computer-vision tech — do NOT train new models.
-  Open decision: fingerspelling alphabet is ASL (as written in Features 1–2) vs
-  BISINDO (existing app + Feature 4) — keep it configurable until product confirms.
+  Product: an interactive American Sign Language (ASL) *learning* app built on top
+  of an existing BISINDO sign-language translator (Flask + Socket.IO in app.py;
+  YOLOv8 `bisindo.pt` and `yolov8n.pt`; MediaPipe Hands; templates/ + static/).
+  Goal: let students learn Indonesian↔English vocabulary and physically produce ASL
+  signs — the manual alphabet (A–Z) AND numbers (0–9) — verified live via camera,
+  learn from letter/number video lessons, and quiz on their learned deck.
+  CONFIRMED: the sign system taught and recognized is ASL (letters + numbers).
+  Hard constraint: reuse existing computer-vision tech — do NOT train new models
+  from scratch (MediaPipe Hands landmarks + an existing pre-trained ASL alphabet/
+  number classifier or a landmark template/KNN matcher covers letters and numbers).
+  Under review only (not implementation): Feature 4, camera BISINDO → Indonesian/
+  English text — reliable word/sentence-level Indonesian sign translation has no
+  proven off-the-shelf tech yet; research ongoing, may revisit later.
   Active planning: openspec/changes/add-signlang-learning-suite/ (PRD package).
   Conventions: kebab-case capability paths; flat specs/ layout; conventional commits.
 
