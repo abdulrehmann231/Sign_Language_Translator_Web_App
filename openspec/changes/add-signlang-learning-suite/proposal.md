@@ -21,6 +21,7 @@ The current product is a one-way BISINDO sign-language *translator* (camera → 
 - `word-card-learning`: The guided card flow where a learner maps an Indonesian word to its English meaning via progressive picture reveals, then fingerspells it in ASL (Feature 1).
 - `camera-object-learning`: The capture-a-photo → detect object → learn-and-sign flow that grows the deck from the real world (Feature 2).
 - `fingerspelling-recognition`: Shared camera-based capture and verification of a learner signing a target ASL letter, ASL number, or a whole word signed letter by letter.
+- `student-account`: Lightweight student sign-in that binds a deck, mastery, and video progress to a private, persistent identity.
 - `learner-deck`: Per-student storage of learned words plus their mastery state; the source quizzes draw from.
 - `sign-quiz`: Deck-driven quizzes with multiple modes (word, letter, number) that assess recognition and production of ASL signs.
 - `learning-videos`: The videos section with the ASL letters and ASL numbers lessons (Indonesian captions) and a completion quiz (Feature 5).
@@ -32,6 +33,6 @@ The current product is a one-way BISINDO sign-language *translator* (camera → 
 ## Impact
 
 - **Existing code:** `app.py` (Flask + Socket.IO streaming), `templates/`, and `static/` gain new routes/pages and client flows. The current YOLO/MediaPipe pipeline (`bisindo.pt`, `yolov8n.pt`) is reused; `sign-language-translation` wraps today's detection loop (review-only).
-- **New dependencies/data:** object-detection classes or an image-classification fallback, an ASL alphabet **+ number** recognizer (existing pre-trained model or MediaPipe-landmark matcher), an Indonesian↔English dictionary and word→picture asset source, ASL reference images for every letter and digit, two lesson videos with Indonesian caption tracks, and per-student persistence (DB or file store) with session/identity for decks.
+- **New dependencies/data:** object detection via the existing YOLOv8 (COCO 80 classes) for v1, an ASL alphabet **+ number** recognizer (MediaPipe-landmark KNN/matcher — no from-scratch training), a **curated static Indonesian↔English dictionary** with word→picture and distractor assets, ASL reference images for every letter and digit, two lesson videos recorded with Indonesian narration (optional Indonesian caption tracks), lightweight-login + per-student persistence (DB or file store) for decks/mastery/video progress.
 - **Privacy/permissions:** camera and photo capture require explicit consent; captured frames should be processed and not retained by default.
-- **Non-goals for this change:** training any new model from scratch, a full account/auth system beyond identifying a student, and implementing Feature 4 (it stays a reviewed, research-only spec).
+- **Non-goals for this change:** training any model from scratch, a full/enterprise auth system (SSO, roles) beyond a lightweight student login, a broader object-classification fallback beyond YOLO's 80 classes (deferred), a live translation API for the dictionary (optional later fallback), and implementing Feature 4 (it stays a reviewed, research-only spec).

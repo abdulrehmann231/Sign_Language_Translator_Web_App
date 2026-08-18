@@ -100,12 +100,14 @@ There are **two independent detection problems** in this product. They have very
 
 - **Sign system: ASL, letters AND numbers (CONFIRMED).** Features 1, 2, 3, and 5 teach and recognize the ASL manual alphabet (A–Z) and numbers (0–9). BISINDO is only referenced by the review-only Feature 4.
 - **Feature 4: research-only (CONFIRMED).** Not implemented in this change; kept as a documented spec pending research (see Architecture § B).
+- **Student identity: lightweight login (CONFIRMED).** A minimal sign-in (e.g. username/display name + simple credential, or a class code) identifies a student so their deck, mastery, and video completion persist and stay isolated. Explicitly NOT a full/enterprise auth system (no SSO, roles, or heavy account-recovery flows). Captured in the new `student-account` capability.
+- **Feature 2 object scope: start with YOLOv8's 80 COCO classes (CONFIRMED for v1).** `yolov8n.pt` is already in the repo, reliable, offline, and localizes objects. An image-classification fallback for broader coverage is a **later** enhancement, added only if learners hit "not recognized" too often — not v1.
+- **Indonesian↔English source: curated static dictionary (CONFIRMED for v1).** Because each word also needs a picture and three quality distractors — which a translation API cannot provide — a hand-curated dictionary (English, Indonesian, picture, distractors) is the source of truth. It only needs to cover the card vocabulary plus the ~80 YOLO labels. A **free translation API (e.g. LibreTranslate / MyMemory) is an optional later fallback**, used solely to auto-translate a detected object label that is not yet in the dictionary; not required for v1.
+- **ASL recognizer: KNN / landmark matcher over MediaPipe Hands (CONFIRMED for v1).** MediaPipe landmarks already ship in the repo; a nearest-neighbor match over a few reference samples per sign covers all 36 letters+numbers uniformly with zero training. Preferred over a pre-trained classifier because most ready-made ASL models are letters-only (numbers would need a second model). Fallback if look-alike accuracy is weak: a light fine-tune of a small classifier on public ASL datasets (see Architecture § A).
+- **Videos: recorded in Indonesian narration; Indonesian captions optional but recommended (CONFIRMED).** The team records the two lessons with spoken-Indonesian instruction. Because part of the audience is deaf/hard-of-hearing, on-screen Indonesian text/captions are strongly recommended for accessibility, but not a hard requirement for v1.
 
 ## Open Questions
 
-- **Student identity model:** anonymous device id, class code, or lightweight login for v1 decks and video-completion tracking?
-- **Object vocabulary scope:** limit Feature 2 to COCO's 80 classes, or add a classification fallback for broader coverage in v1?
-- **Dictionary source:** curated static word list vs a translation API for Indonesian↔English and distractors?
-- **Recognizer choice for ASL:** ship the no-training KNN/template matcher first, or start from an existing pre-trained classifier? (Both avoid from-scratch training; a light fine-tune on public datasets is the fallback if accuracy is low.)
 - **Motion letters:** confirm the v1 handling for the moving signs "J" and "Z" (animated reference + relaxed match vs start/end-pose matching).
-- **Video source:** produce the two ASL lesson videos in-house or license/embed existing ones, and confirm the Indonesian caption format (e.g. WebVTT).
+- **Lightweight-login mechanism:** exact form — display name + PIN, email magic link, or a teacher-issued class code + student name? (All qualify as "lightweight"; pick per how classrooms will onboard.)
+- **Caption production:** if Indonesian captions are added, confirm the format (e.g. WebVTT) and whether they are burned-in or a toggleable track.
